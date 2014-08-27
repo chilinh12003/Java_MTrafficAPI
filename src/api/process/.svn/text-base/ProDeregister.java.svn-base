@@ -1,0 +1,372 @@
+package MyProcess;
+
+import java.util.Calendar;
+
+import MyDataSource.MyDataRow;
+import MyDataSource.MyTableModel;
+import MyProcess.Charge.ErrorCode;
+import MyUtility.MyConfig;
+import MyUtility.MyConvert;
+import MyUtility.MyLogger;
+import Service.DefineMT;
+import Service.MOLog;
+import Service.ServiceObject;
+import Service.DefineMT.MTType;
+import Sub.Subscriber;
+import Sub.SubscriberObject;
+import Sub.UnSubscriber;
+
+public class ProDeregister
+{
+	public enum DeregResult
+	{
+		// 0 Đăng ký thành công dịch vụ
+		Success(0),
+		// 1 Thuê bao này đã tồn tại
+		NotExistSub(1),
+		// 1xx Đều là đăng ký không thành công
+		Fail(100),
+		// Lỗi hệ thống
+		SystemError(101),
+		// Thông tin nhập vào không hợp lệ
+		InputInvalid(102), ;
+
+		private int value;
+
+		private DeregResult(int value)
+		{
+			this.value = value;
+		}
+
+		public Integer GetValue()
+		{
+			return this.value;
+		}
+
+		public static DeregResult FromInt(int iValue)
+		{
+			for (DeregResult type : DeregResult.values())
+			{
+				if (type.GetValue() == iValue)
+					return type;
+			}
+			return Fail;
+		}
+	}
+
+	MyLogger mLog = new MyLogger(LocalConfig.ConfigLog4JPath,this.getClass().toString());
+
+	SubscriberObject mSubObj = new SubscriberObject();
+
+	ServiceObject mServiceObj = new ServiceObject();
+
+	Calendar mCal_Current = Calendar.getInstance();
+	Calendar mCal_SendMO = Calendar.getInstance();
+	Calendar mCal_Expire = Calendar.getInstance();
+
+	Subscriber mSub = null;
+	UnSubscriber mUnSub = null;
+
+	DefineMT.MTType mMTType = MTType.RegFail;
+
+	MyTableModel mTable_MOLog = null;
+
+	String MTContent = "";
+
+	String MSISDN = "";
+	String RequestID = "";
+	String PacketName = "";
+	String Channel = "";
+
+	String AppName = "";
+	String UserName = "";
+	String IP = "";
+
+	public ProDeregister(String MSISDN, String RequestID, String PacketName, String Channel, String AppName, String UserName, String IP)
+	{
+		this.MSISDN = MSISDN;
+		this.RequestID = RequestID;
+		this.PacketName = PacketName;
+		this.Channel = Channel.toUpperCase().trim();
+
+		this.AppName = AppName;
+		this.UserName = UserName;
+		this.IP = IP;
+	}
+
+	private void Init() throws Exception
+	{
+		try
+		{
+			mSub = new Subscriber(LocalConfig.ConfigProxoolPath,LocalConfig.PoolName_Data_SQL);
+			mUnSub = new UnSubscriber(LocalConfig.ConfigProxoolPath,LocalConfig.PoolName_Data_SQL);
+
+			mTable_MOLog = TableTemplate.Get_mMOLog().clone();
+			mTable_MOLog.Clear();
+
+		}
+		catch (Exception ex)
+		{
+			throw ex;
+		}
+	}
+
+	public MyConfig.ChannelType GetChannelType()
+	{
+		try
+		{
+			return MyConfig.ChannelType.valueOf(Channel);
+		}
+		catch (Exception ex)
+		{
+			mLog.log.error(ex);
+			return MyConfig.ChannelType.NOTHING;
+		}
+	}
+
+	public Subscriber.VNPApplication GetApplication()
+	{
+		try
+		{
+			return Subscriber.VNPApplication.valueOf(AppName.toUpperCase());
+		}
+		catch (Exception ex)
+		{
+			mLog.log.error(ex);
+			return Subscriber.VNPApplication.NoThing;
+		}
+	}
+
+	private MTType AddToList() throws Exception
+	{
+		try
+		{
+			// nêu la so test hiệu năng của VInaphone thì ko trả MT
+			if (MSISDN.startsWith("8484"))
+				return mMTType;
+
+			MTContent = Common.GetDefineMT_Message(mMTType);
+			MTContent = MTContent.replace("[TenDichVu]", mServiceObj.ServiceName);
+			if (Common.SendMT(MSISDN, mServiceObj.DeregKeyword, MTContent, RequestID))
+				AddToMOLog(mMTType, MTContent);
+			return mMTType;
+		}
+		catch (Exception ex)
+		{
+			throw ex;
+		}
+	}
+
+	/**
+	 * Thêm MT vào ta
+	 * 
+	 * @throws Exception
+	 */
+	private void AddToMOLog(MTType mMTType_Current, String MTContent_Current) throws Exception
+	{
+		try
+		{
+			MyDataRow mRow_Log = mTable_MOLog.CreateNewRow();
+
+			mRow_Log.SetValueCell("ServiceID", mServiceObj.ServiceID);
+			mRow_Log.SetValueCell("MSISDN", MSISDN);
+			mRow_Log.SetValueCell("ReceiveDate", MyConfig.Get_DateFormat_InsertDB().format(mCal_Current.getTime()));
+			mRow_Log.SetValueCell("LogDate", MyConfig.Get_DateFormat_InsertDB().format(mCal_Current.getTime()));
+			mRow_Log.SetValueCell("ChannelTypeID", Common.GetChannelType(Channel).GetValue());
+			mRow_Log.SetValueCell("ChannelTypeName", Common.GetChannelType(Channel).toString());
+			mRow_Log.SetValueCell("MTTypeID", mMTType_Current.GetValue());
+			mRow_Log.SetValueCell("MTTypeName", mMTType_Current.toString());
+			mRow_Log.SetValueCell("MO", mServiceObj.RegKeyword);
+			mRow_Log.SetValueCell("MT", MTContent_Current);
+			mRow_Log.SetValueCell("LogContent", "DKDV:" + mServiceObj.ServiceName);
+			mRow_Log.SetValueCell("PID", MyConvert.GetPIDByMSISDN(MSISDN, LocalConfig.MAX_PID));
+			mRow_Log.SetValueCell("RequestID", RequestID);
+
+			mTable_MOLog.AddNewRow(mRow_Log);
+		}
+		catch (Exception ex)
+		{
+			mLog.log.error(ex);
+		}
+	}
+
+	private void Insert_MOLog()
+	{
+		try
+		{
+			MOLog mMOLog = new MOLog(LocalConfig.ConfigProxoolPath,LocalConfig.PoolName_Data_SQL);
+			mMOLog.Insert(0, mTable_MOLog.GetXML());
+		}
+		catch (Exception ex)
+		{
+			mLog.log.error(ex);
+		}
+	}
+
+	private MyTableModel AddInfo() throws Exception
+	{
+		try
+		{
+			MyTableModel mTable_UnSub = TableTemplate.Get_mUnSubscriber();
+			mTable_UnSub.Clear();
+
+			// Tạo row để insert vào Table Sub
+			MyDataRow mNewRow = mTable_UnSub.CreateNewRow();
+			mNewRow.SetValueCell("MSISDN", mSubObj.MSISDN);
+			mNewRow.SetValueCell("ServiceID", mSubObj.ServiceID);
+
+			mNewRow.SetValueCell("FirstDate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.FirstDate));
+			mNewRow.SetValueCell("EffectiveDate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.EffectiveDate));
+			mNewRow.SetValueCell("ExpiryDate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.ExpiryDate));
+
+			if (mSubObj.ChargeDate != null)
+				mNewRow.SetValueCell("ChargeDate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.ChargeDate));
+
+			if (mSubObj.RetryChargeCount != null)
+				mNewRow.SetValueCell("RetryChargeCount", mSubObj.RetryChargeCount);
+
+			if (mSubObj.RetryChargeDate != null)
+				mNewRow.SetValueCell("RetryChargeDate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.RetryChargeDate));
+
+			if (mSubObj.RenewChargeDate != null)
+				mNewRow.SetValueCell("RenewChargeDate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.RenewChargeDate));
+
+			mNewRow.SetValueCell("ChannelTypeID", mSubObj.ChannelTypeID);
+			mNewRow.SetValueCell("ChannelTypeName", mSubObj.ChannelTypeName);
+			mNewRow.SetValueCell("StatusID", mSubObj.StatusID);
+			mNewRow.SetValueCell("StatusName", mSubObj.StatusName);
+			mNewRow.SetValueCell("PID", mSubObj.PID);
+			mNewRow.SetValueCell("TotalMT", mSubObj.TotalMT);
+			mNewRow.SetValueCell("TotalMTByDay", mSubObj.TotalMTByDay);
+			mNewRow.SetValueCell("OrderID", mSubObj.OrderID);
+
+			mNewRow.SetValueCell("AppID", mSubObj.AppID);
+			mNewRow.SetValueCell("AppName", mSubObj.AppName);
+			mNewRow.SetValueCell("UserName", mSubObj.UserName);
+			mNewRow.SetValueCell("IP", mSubObj.IP);
+
+			mNewRow.SetValueCell("PartnerID", mSubObj.PartnerID);
+
+			if (mSubObj.LastUpdate != null)
+				mNewRow.SetValueCell("LastUpdate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.LastUpdate));
+
+			if (mSubObj.DeregDate != null)
+				mNewRow.SetValueCell("DeregDate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.DeregDate));
+
+			mTable_UnSub.AddNewRow(mNewRow);
+			return mTable_UnSub;
+		}
+		catch (Exception ex)
+		{
+			throw ex;
+		}
+	}
+
+	private boolean MoveToSub() throws Exception
+	{
+		try
+		{
+			MyTableModel mTable_UnSub = AddInfo();
+
+			if (!mUnSub.Move(0, mTable_UnSub.GetXML()))
+			{
+				mLog.log.info(" Move Tu Sub Sang UnSub KHONG THANH CONG: XML Insert-->" + mTable_UnSub.GetXML());
+				return false;
+			}
+
+			return true;
+		}
+		catch (Exception ex)
+		{
+			throw ex;
+		}
+	}
+
+	/**
+	 * tạo dữ liệu cho những đăng ký lại (trước đó đã hủy dịch vụ)
+	 * 
+	 * @throws Exception
+	 */
+	private void CreateDeReg() throws Exception
+	{
+		try
+		{
+			mSubObj.ChannelTypeID = GetChannelType().GetValue();
+			mSubObj.ChannelTypeName = GetChannelType().toString();
+			mSubObj.DeregDate = mCal_Current.getTime();
+			mSubObj.AppID = GetApplication().GetValue();
+			mSubObj.AppName = GetApplication().toString();
+			mSubObj.UserName = UserName;
+			mSubObj.IP = IP;
+		}
+		catch (Exception ex)
+		{
+			throw ex;
+		}
+
+	}
+
+	public MTType Process()
+	{
+		mMTType = MTType.RegFail;
+		try
+		{
+			// Khoi tao
+			Init();
+			
+			// Lấy service
+			mServiceObj = Common.GetServiceByCode(PacketName);
+
+			if (mServiceObj.IsNull())
+			{
+				mLog.log.info("Dich vu khong ton tai.");
+				mMTType = MTType.Invalid;
+				return AddToList();
+			}
+			Integer PID = MyConvert.GetPIDByMSISDN(MSISDN, LocalConfig.MAX_PID);
+
+			MyTableModel mTable_Sub = mSub.Select(2, PID.toString(), MSISDN, mServiceObj.ServiceID.toString());
+
+			if (mTable_Sub.GetRowCount() > 0)
+				mSubObj = SubscriberObject.Convert(mTable_Sub, false);
+
+			mSubObj.PID = MyConvert.GetPIDByMSISDN(MSISDN, LocalConfig.MAX_PID);
+
+			// Nếu chưa đăng ký dịch vụ
+			if (mSubObj.IsNull())
+			{
+				mMTType = MTType.DeRegNotRegister;
+				return AddToList();
+			}
+
+			CreateDeReg();
+			ErrorCode mResult = Charge.ChargeDereg(mServiceObj, MSISDN, mServiceObj.DeregKeyword, GetChannelType(), GetApplication(), UserName, IP);
+			if (mResult != ErrorCode.ChargeSuccess)
+			{
+				mMTType = MTType.RegFail;
+				return AddToList();
+			}
+
+			if (MoveToSub())
+			{
+				mMTType = MTType.DeRegSuccess;
+				return AddToList();
+			}
+
+			mMTType = MTType.DeRegFail;
+
+		}
+		catch (Exception ex)
+		{
+			mMTType = MTType.SystemError;
+			mLog.log.error(ex);
+		}
+		finally
+		{
+			Insert_MOLog();
+		}
+
+		return mMTType;
+	}
+
+}

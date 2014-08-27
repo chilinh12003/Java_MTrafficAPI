@@ -1,0 +1,49 @@
+package MyProcess;
+
+import javax.servlet.*;
+
+import MyUtility.MyLogger;
+
+public class InitApp implements ServletContextListener
+{
+	MyLogger mLog = new MyLogger(LocalConfig.ConfigLog4JPath,this.getClass().toString());
+	public void contextInitialized(ServletContextEvent event)
+	{
+		try
+		{
+		ServletContext context = event.getServletContext();
+		LocalConfig.LogDataFolder = context.getInitParameter("LogDataFolder");
+		LocalConfig.VNPURLCharging = context.getInitParameter("VNPURLCharging");
+		LocalConfig.VNPCPName = context.getInitParameter("VNPCPName");
+		LocalConfig.VNPUserName = context.getInitParameter("VNPUserName");
+		LocalConfig.VNPPassword = context.getInitParameter("VNPPassword");
+		
+		if(!context.getInitParameter("ConfigProxoolPath").equalsIgnoreCase(""))
+				LocalConfig.ConfigProxoolPath = context.getInitParameter("ConfigProxoolPath");	
+		
+		if(!context.getInitParameter("ConfigLog4JPath").equalsIgnoreCase(""))
+			LocalConfig.ConfigLog4JPath = context.getInitParameter("ConfigLog4JPath");
+	
+		
+		String  Temp = context.getInitParameter("LONG_MESSAGE_CONTENT_TYPE");
+		if(!Temp.equals(""))
+		{
+			LocalConfig.LONG_MESSAGE_CONTENT_TYPE = Integer.parseInt(Temp);
+		}
+		
+		LocalConfig.GetListDefineMT();
+		LocalConfig.GetListService();
+		}
+		catch(Exception ex)
+		{
+			mLog.log.error(ex);
+		}
+	}
+
+	public void contextDestroyed(ServletContextEvent event)
+	{
+		ServletContext context = event.getServletContext();
+		context.log("***ShowLifecycles - Destroyed the servlet context");
+	}
+
+}

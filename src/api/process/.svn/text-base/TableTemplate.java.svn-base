@@ -1,0 +1,41 @@
+package MyProcess;
+
+import MyDataSource.MyTableModel;
+import Service.ChargeLog;
+import Service.MOLog;
+import Sub.Subscriber;
+import Sub.UnSubscriber;
+
+/**
+ * Chứa các đối tượng đã table mẫu ở Database Các đối tượng này sẽ được load khi
+ * chương trình bắt đầu chạy
+ * 
+ * @author Administrator
+ * 
+ */
+public class TableTemplate
+{
+	public static synchronized MyTableModel Get_mMOLog() throws Exception
+	{
+		MOLog mMOLog = new MOLog(LocalConfig.ConfigProxoolPath,LocalConfig.PoolName_Data_SQL);
+		return mMOLog.Select(0);
+	}	
+	
+	public static synchronized MyTableModel Get_mUnSubscriber() throws Exception
+	{
+		Subscriber mSub = new Subscriber(LocalConfig.ConfigProxoolPath,LocalConfig.PoolName_Data_SQL);
+		return mSub.Select(0);
+	}
+	
+	public static synchronized MyTableModel Get_mChargeLog() throws Exception
+	{
+		ChargeLog mChargeLog = new ChargeLog(LocalConfig.ConfigProxoolPath,LocalConfig.PoolName_Data_SQL);
+		return mChargeLog.Select(0);
+	}
+	
+	public static synchronized MyTableModel Get_mSubscriber() throws Exception
+	{
+		UnSubscriber mUnSub = new UnSubscriber(LocalConfig.ConfigProxoolPath,LocalConfig.PoolName_Data_SQL);	
+		return mUnSub.Select(0);
+	}	
+}
