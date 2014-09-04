@@ -126,7 +126,8 @@ public class ProGetInfoAllSub
 			String last_time_renew = "NULL";
 			String last_time_retry = "NULL";
 			String expire_time = "NULL";
-			if (mSubObj.IsNull())
+			
+			if (mSubObj.IsNull() || (mSubObj.IsDereg && mSubObj.StatusID == Subscriber.Status.UndoSub.GetValue()))
 			{
 				mInfoSubResult = InfoSubResult.Success;
 				mStatus = Status.NotExist;
