@@ -4,9 +4,16 @@
 	<classpathentry kind="con" path="melibrary.com.genuitec.eclipse.j2eedt.core.MYECLIPSE_JAVAEE_6_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry exported="true" kind="lib" path="D:/MyEclipse/JavaLib/HttpClient/lib/httpclient-4.2.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/MyEclipse/JavaLib/HttpClient/lib/httpcore-4.2.2.jar"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/MyDataProcess"/>
+	<classpathentry exported="true" kind="lib" path="D:/MyEclipse/JavaLib/HttpClient/lib/httpclient-4.2.3.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/lib"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="D:/MyEclipse/JavaLib/HttpClient/lib/httpcore-4.2.2.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/lib"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="com.genuitec.runtime.library/com.genuitec.generic_6.0">
 		<attributes>
 			<attribute name="owner.project.facets" value="jst.web"/>
@@ -25,5 +32,6 @@
 	</classpathentry>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/MTraffic"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/MyLibrary"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/MyDataProcess"/>
 	<classpathentry kind="output" path="WebRoot/WEB-INF/classes"/>
 </classpath>

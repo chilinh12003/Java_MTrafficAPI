@@ -98,7 +98,6 @@ public class Register extends HttpServlet
 			response.setContentType("text/xml");
 			PrintWriter out = response.getWriter();
 			out.println(GetVNPInfo(request));
-
 			out.flush();
 			out.close();
 		}

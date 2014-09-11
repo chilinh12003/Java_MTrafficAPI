@@ -53,18 +53,30 @@
     <servlet-name>GetInteraction</servlet-name>
     <servlet-class>api.page.GetInteraction</servlet-class>
   </servlet>
-
 <context-param>
-      <param-name>ConfigProxoolPath</param-name>
-      <param-value>ProxoolConfig.xml</param-value>     
+      <param-name>DBConfigPath</param-name>
+      <param-value>D:\2.Java\.metadata\.me_tcat7\webapps\MTrafficAPI\ProxoolConfig.xml</param-value>     
   </context-param>
   <context-param>
-      <param-name>ConfigLog4JPath</param-name>
-      <param-value>log4j.properties</param-value>     
+      <param-name>LogConfigPath</param-name>
+      <param-value>D:\2.Java\.metadata\.me_tcat7\webapps\MTrafficAPI\log4j.properties</param-value>     
   </context-param>
-<context-param>
+  <context-param>
+    <param-name>LogDataFolder</param-name>
+    <param-value>D:\2.Java\.metadata\.me_tcat7\webapps\MTrafficAPI\LogFile\</param-value>
+  </context-param>
+  
+  <context-param>
+    <param-name>MySQLPoolName</param-name>
+    <param-value>MySQL</param-value>
+  </context-param>
+  <context-param>
+    <param-name>MSSQLPoolName</param-name>
+    <param-value>MSSQL</param-value>
+  </context-param>
+	<context-param>
       <param-name>VNPURLCharging</param-name>
-      <param-value>http://localhost:8080/MTraffic_DataSync_V2/VNPCharge_TEst.ashx</param-value>     
+      <param-value>http://localhost:8082/MTraffic_DataSync_V2/XML_Charge_Test.ashx</param-value>     
   </context-param>
   <context-param>
       <param-name>LONG_MESSAGE_CONTENT_TYPE</param-name>
@@ -122,6 +134,6 @@
     <welcome-file>index.jsp</welcome-file>
   </welcome-file-list>
   <listener>
-  	<listener-class>MyProcess.InitApp</listener-class>
+  	<listener-class>api.process.InitApp</listener-class>
   </listener>
 </web-app>

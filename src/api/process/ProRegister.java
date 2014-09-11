@@ -212,7 +212,7 @@ public class ProRegister
 		{
 			if (mPromoObj.mTrialType == TrialType.Day)
 			{
-				mCal_Expire.add(Calendar.DATE, mPromoObj.TrialNumberFree);
+				mCal_Expire.add(Calendar.DATE, mPromoObj.TrialNumberFree - 1);
 				FreeTime = "" + mPromoObj.TrialNumberFree + " ngay";
 			}
 			else if (mPromoObj.mTrialType == TrialType.Week)
@@ -231,7 +231,7 @@ public class ProRegister
 		{
 			if (mPromoObj.mPromotionType == PromotionType.Day)
 			{
-				mCal_Expire.add(Calendar.DATE, mPromoObj.PromotionNumberFree);
+				mCal_Expire.add(Calendar.DATE, mPromoObj.PromotionNumberFree - 1);
 				FreeTime = "" + mPromoObj.PromotionNumberFree + " ngay";
 			}
 			else if (mPromoObj.mPromotionType == PromotionType.Week)
@@ -453,8 +453,8 @@ public class ProRegister
 		{
 			mSubObj.ChannelTypeID = Common.GetChannelType(Channel).GetValue();
 			mSubObj.ChannelTypeName = Common.GetChannelType(Channel).toString();
-			
-			mSubObj.ChargeDate = null;			
+
+			mSubObj.ChargeDate = null;
 			mSubObj.EffectiveDate = mCal_Current.getTime();
 			mSubObj.ExpiryDate = mCal_Expire.getTime();
 			mSubObj.FirstDate = mCal_Current.getTime();
@@ -487,7 +487,7 @@ public class ProRegister
 			// nêu la so test hiệu năng của VInaphone thì ko trả MT
 			if (MSISDN.startsWith("8484"))
 				return mMTType;
-			
+
 			MTContent = Common.GetDefineMT_Message(mMTType);
 			MTContent = MTContent.replace("[TenDichVu]", mServiceObj.ServiceName);
 			MTContent = MTContent.replace("[DeregKeyword]", mServiceObj.DeregKeyword);
@@ -738,6 +738,7 @@ public class ProRegister
 					mMTType = MTType.RegFail;
 				}
 
+				
 				return AddToList();
 			}
 

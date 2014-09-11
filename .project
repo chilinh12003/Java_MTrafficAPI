@@ -3,6 +3,9 @@
 	<name>MTrafficAPI</name>
 	<comment></comment>
 	<projects>
+		<project>MyLibrary</project>
+		<project>MTraffic</project>
+		<project>MyDataProcess</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
