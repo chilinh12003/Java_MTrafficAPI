@@ -9,7 +9,7 @@
         <dependent-module archiveName="MTraffic.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/MTraffic/MTraffic">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="MyDataProcess.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/MyDataProcess/MyDataProcess">
+        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/MyDataProcess/MyDataProcess">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <property name="context-root" value="/MTrafficAPI"/>

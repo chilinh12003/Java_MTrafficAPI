@@ -14,7 +14,7 @@ import org.xml.sax.InputSource;
 
 import uti.utility.MyCheck;
 import uti.utility.MyConfig;
-import uti.utility.MyConfig.VNPApplication;
+import uti.utility.VNPApplication;
 import uti.utility.MyLogger;
 import uti.utility.MyText;
 import dat.gateway.ems_send_queue;
@@ -296,18 +296,7 @@ public class Common
 	 */
 	public static VNPApplication GetApplication(String AppName)
 	{
-
-		try
-		{
-			return VNPApplication.valueOf(AppName.toUpperCase());
-		}
-		catch (Exception ex)
-		{
-			mLog.log.error(ex);
-		}
-		return VNPApplication.NoThing;
+		return VNPApplication.valueOf(AppName.toUpperCase());
 	}
-
-
 
 }

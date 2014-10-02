@@ -3,7 +3,7 @@ package api.process;
 import java.util.Calendar;
 
 import uti.utility.MyConfig;
-import uti.utility.MyConfig.VNPApplication;
+import uti.utility.VNPApplication;
 import uti.utility.MyConvert;
 import uti.utility.MyLogger;
 import api.process.Charge.ErrorCode;
@@ -11,6 +11,7 @@ import api.process.PromotionObject.AdvertiseType;
 import api.process.PromotionObject.BundleType;
 import api.process.PromotionObject.PromotionType;
 import api.process.PromotionObject.TrialType;
+import dat.service.WapRegLog;
 import dat.service.DefineMT;
 import dat.service.DefineMT.MTType;
 import dat.service.MOLog;
@@ -85,7 +86,8 @@ public class ProRegister
 	DefineMT.MTType mMTType = MTType.RegFail;
 
 	MyTableModel mTable_MOLog = null;
-
+	MyTableModel mTable_WapRegLog = null;
+	
 	private int FreeCount = 7;
 	String MTContent = "";
 
@@ -294,7 +296,7 @@ public class ProRegister
 			mRow_Log.SetValueCell("LogContent", "DKDV:" + mServiceObj.ServiceName);
 			mRow_Log.SetValueCell("PID", MyConvert.GetPIDByMSISDN(MSISDN, LocalConfig.MAX_PID));
 			mRow_Log.SetValueCell("RequestID", RequestID);
-
+			mRow_Log.SetValueCell("PartnerID", mSubObj.PartnerID);
 			mTable_MOLog.AddNewRow(mRow_Log);
 		}
 		catch (Exception ex)
@@ -349,6 +351,7 @@ public class ProRegister
 			mRow_Sub.SetValueCell("AppName", mSubObj.AppName);
 			mRow_Sub.SetValueCell("UserName", mSubObj.UserName);
 			mRow_Sub.SetValueCell("IP", mSubObj.IP);
+			mRow_Sub.SetValueCell("PartnerID", mSubObj.PartnerID);
 
 			if (mSubObj.LastUpdate != null)
 				mRow_Sub.SetValueCell("LastUpdate", MyConfig.Get_DateFormat_InsertDB().format(mSubObj.LastUpdate));
@@ -430,10 +433,10 @@ public class ProRegister
 			mSubObj.TotalMTByDay = 0;
 
 			mSubObj.AppID = Common.GetApplication(AppName).GetValue();
-			mSubObj.AppName = Common.GetApplication(AppName).toString();
+			mSubObj.AppName = AppName;
 			mSubObj.UserName = UserName;
 			mSubObj.IP = IP;
-
+			mSubObj.PartnerID = GetPartnerID();
 		}
 		catch (Exception ex)
 		{
@@ -469,9 +472,11 @@ public class ProRegister
 			mSubObj.TotalMTByDay = 0;
 
 			mSubObj.AppID = Common.GetApplication(AppName).GetValue();
-			mSubObj.AppName = Common.GetApplication(AppName).toString();
+			mSubObj.AppName = AppName;
+			
 			mSubObj.UserName = UserName;
 			mSubObj.IP = IP;
+			mSubObj.PartnerID = GetPartnerID();
 
 		}
 		catch (Exception ex)
@@ -502,6 +507,44 @@ public class ProRegister
 		catch (Exception ex)
 		{
 			throw ex;
+		}
+	}
+
+	private int GetPartnerID() throws Exception
+	{
+		if (Common.GetApplication(AppName).mApp == VNPApplication.TelcoApplication.MOBILE_ADS || Common.GetApplication(AppName).mApp == VNPApplication.TelcoApplication.MOBILEADS)
+		{
+			WapRegLog mWapRegLog = new WapRegLog(LocalConfig.mDBConfig_MSSQL);
+			mTable_WapRegLog = mWapRegLog.Select(2, mSubObj.MSISDN);
+			if (mTable_WapRegLog != null && mTable_WapRegLog.GetRowCount() > 0)
+			{
+				return Integer.parseInt(mTable_WapRegLog.GetValueAt(0, "PartnerID").toString());
+			}
+		}
+		return 0;
+	}
+
+	private void Update_WapRegLog()
+	{
+		try
+		{
+			if (Common.GetApplication(AppName).mApp == VNPApplication.TelcoApplication.MOBILE_ADS
+					|| Common.GetApplication(AppName).mApp == VNPApplication.TelcoApplication.MOBILEADS)
+			{
+
+				if (mTable_WapRegLog == null || mTable_WapRegLog.GetRowCount() < 1)
+					return;
+				
+				mTable_WapRegLog.SetValueAt(MyConfig.Get_DateFormat_InsertDB().format(mCal_Current.getTime()), 0,
+						"RegisterDate");
+				mTable_WapRegLog.SetValueAt(WapRegLog.Status.Registered.GetValue(), 0, "StatusID");
+				WapRegLog mWapRegLog = new WapRegLog(LocalConfig.mDBConfig_MSSQL);
+				mWapRegLog.Update(1, mTable_WapRegLog.GetXML());
+			}
+		}
+		catch (Exception ex)
+		{
+			mLog.log.error(ex);
 		}
 	}
 
@@ -569,7 +612,7 @@ public class ProRegister
 					CreateNewReg();
 					SetPromotionToSub();
 
-					ErrorCode mResult = Charge.ChargeRegFree(mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
+					ErrorCode mResult = Charge.ChargeRegFree(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
 							Common.GetApplication(AppName), UserName, IP);
 
 					if (mResult != ErrorCode.ChargeSuccess)
@@ -580,7 +623,7 @@ public class ProRegister
 
 					if (Insert_Sub())
 					{
-						if (mSubObj.AppID == VNPApplication.CCOS.GetValue())
+						if (mSubObj.AppID == VNPApplication.TelcoApplication.CCOS.GetValue())
 						{
 
 							mMTType = MTType.RegFromVNPSuccess_Case_1;
@@ -602,7 +645,7 @@ public class ProRegister
 					CreateNewReg();
 					SetPromotionToSub();
 
-					ErrorCode mResult = Charge.ChargeRegFree(mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
+					ErrorCode mResult = Charge.ChargeRegFree(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
 							Common.GetApplication(AppName), UserName, IP);
 
 					if (mResult != ErrorCode.ChargeSuccess)
@@ -612,7 +655,7 @@ public class ProRegister
 					}
 					if (MoveToUnSub())
 					{
-						if (mSubObj.AppID == VNPApplication.CCOS.GetValue())
+						if (mSubObj.AppID == VNPApplication.TelcoApplication.CCOS.GetValue())
 						{
 
 							mMTType = MTType.RegFromVNPSuccess_Case_1;
@@ -636,7 +679,7 @@ public class ProRegister
 
 					SetPromotionToSub();
 
-					ErrorCode mResult = Charge.ChargeRegFree(mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
+					ErrorCode mResult = Charge.ChargeRegFree(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
 							Common.GetApplication(AppName), UserName, IP);
 
 					if (mResult != ErrorCode.ChargeSuccess)
@@ -646,7 +689,7 @@ public class ProRegister
 					}
 					if (MoveToUnSub())
 					{
-						if (mSubObj.AppID == VNPApplication.CCOS.GetValue())
+						if (mSubObj.AppID == VNPApplication.TelcoApplication.CCOS.GetValue())
 						{
 
 							mMTType = MTType.RegFromVNPSuccess_Case_1;
@@ -674,7 +717,7 @@ public class ProRegister
 				// Tạo dữ liệu cho đăng ký mới
 				CreateNewReg();
 
-				ErrorCode mResult = Charge.ChargeRegFree(mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
+				ErrorCode mResult = Charge.ChargeRegFree(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
 						Common.GetApplication(AppName), UserName, IP);
 
 				if (mResult != ErrorCode.ChargeSuccess)
@@ -685,7 +728,7 @@ public class ProRegister
 
 				if (Insert_Sub())
 				{
-					if (mSubObj.AppID == VNPApplication.CCOS.GetValue())
+					if (mSubObj.AppID == VNPApplication.TelcoApplication.CCOS.GetValue())
 					{
 
 						mMTType = MTType.RegFromVNPSuccess_Case_1;
@@ -712,7 +755,7 @@ public class ProRegister
 
 				CreateRegAgain();
 
-				ErrorCode mResult = Charge.ChargeRegFree(mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
+				ErrorCode mResult = Charge.ChargeRegFree(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
 						Common.GetApplication(AppName), UserName, IP);
 
 				if (mResult != ErrorCode.ChargeSuccess)
@@ -723,7 +766,7 @@ public class ProRegister
 
 				if (MoveToUnSub())
 				{
-					if (mSubObj.AppID == VNPApplication.CCOS.GetValue())
+					if (mSubObj.AppID == VNPApplication.TelcoApplication.CCOS.GetValue())
 					{
 
 						mMTType = MTType.RegFromVNPSuccess_Case_1;
@@ -738,7 +781,6 @@ public class ProRegister
 					mMTType = MTType.RegFail;
 				}
 
-				
 				return AddToList();
 			}
 
@@ -770,7 +812,7 @@ public class ProRegister
 				CreateRegAgain();
 
 				// đồng bộ thuê bao sang Vinpahone
-				ErrorCode mResult = Charge.ChargeReg(mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
+				ErrorCode mResult = Charge.ChargeReg(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.RegKeyword, Common.GetChannelType(Channel),
 						Common.GetApplication(AppName), UserName, IP);
 
 				// Charge
@@ -789,7 +831,7 @@ public class ProRegister
 				// báo lỗi
 				if (MoveToUnSub())
 				{
-					if (mSubObj.AppID == VNPApplication.CCOS.GetValue())
+					if (mSubObj.AppID == VNPApplication.TelcoApplication.CCOS.GetValue())
 					{
 
 						mMTType = MTType.RegFromVNPSuccess_Case_2;
@@ -818,6 +860,7 @@ public class ProRegister
 		{
 			// Insert vao log
 			Insert_MOLog();
+			Update_WapRegLog();
 		}
 		return mMTType;
 	}

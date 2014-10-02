@@ -3,7 +3,7 @@ package api.process;
 import java.util.Calendar;
 
 import uti.utility.MyConfig;
-import uti.utility.MyConfig.VNPApplication;
+import uti.utility.VNPApplication;
 import uti.utility.MyConvert;
 import uti.utility.MyLogger;
 import api.process.Charge.ErrorCode;
@@ -134,7 +134,7 @@ public class ProDeregister
 		catch (Exception ex)
 		{
 			mLog.log.error(ex);
-			return VNPApplication.NoThing;
+			return new VNPApplication();
 		}
 	}
 
@@ -341,7 +341,7 @@ public class ProDeregister
 			}
 
 			CreateDeReg();
-			ErrorCode mResult = Charge.ChargeDereg(mServiceObj, MSISDN, mServiceObj.DeregKeyword, GetChannelType(), GetApplication(), UserName, IP);
+			ErrorCode mResult = Charge.ChargeDereg(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.DeregKeyword, GetChannelType(), GetApplication(), UserName, IP);
 			if (mResult != ErrorCode.ChargeSuccess)
 			{
 				mMTType = MTType.RegFail;

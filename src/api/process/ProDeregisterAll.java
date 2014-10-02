@@ -4,7 +4,7 @@ import java.util.Calendar;
 import java.util.Vector;
 
 import uti.utility.MyConfig;
-import uti.utility.MyConfig.VNPApplication;
+import uti.utility.VNPApplication;
 import uti.utility.MyConvert;
 import uti.utility.MyLogger;
 import api.process.Charge.ErrorCode;
@@ -105,7 +105,7 @@ public class ProDeregisterAll
 		catch(Exception ex)
 		{
 			mLog.log.error(ex);
-			return VNPApplication.NoThing;
+			return new VNPApplication();
 		}
 	}
 
@@ -251,7 +251,7 @@ public class ProDeregisterAll
 					ListFail +="|Khong ton tai ServiceID:"+mSubObj.ServiceID;
 				}
 				CreateDeReg(mSubObj);
-				ErrorCode mResult = Charge.ChargeDereg(mServiceObj, MSISDN, mServiceObj.DeregKeyword, GetChannelType(), GetApplication(), UserName, IP);
+				ErrorCode mResult = Charge.ChargeDereg(mSubObj.PartnerID,mServiceObj, MSISDN, mServiceObj.DeregKeyword, GetChannelType(), GetApplication(), UserName, IP);
 				if (mResult != ErrorCode.ChargeSuccess)
 				{
 					ListFail +="|ChargeDereg khong thanh cong ErrorCode:"+mResult.toString();
