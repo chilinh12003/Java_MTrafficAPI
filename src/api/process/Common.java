@@ -50,7 +50,7 @@ public class Common
 			String REQUEST_ID = Temp.toString();
 			Integer ContentType = 0;
 
-			if (MTContent.length() > 254)
+			if (MTContent.length() > 160)
 				ContentType = LocalConfig.LONG_MESSAGE_CONTENT_TYPE;
 			return mSendQueue.Insert(USER_ID, SERVICE_ID, COMMAND_CODE, MTContent, REQUEST_ID, ContentType.toString());
 

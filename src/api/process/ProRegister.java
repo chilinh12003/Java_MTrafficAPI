@@ -88,6 +88,7 @@ public class ProRegister
 	MyTableModel mTable_MOLog = null;
 	MyTableModel mTable_WapRegLog = null;
 	
+	String Keyword = "DK API";
 	private int FreeCount = 7;
 	String MTContent = "";
 
@@ -252,6 +253,30 @@ public class ProRegister
 		mSubObj.ExpiryDate = mCal_Expire.getTime();
 	}
 
+	/**
+	 * Lấy thông tin MO từ VNP gửi sang
+	 */
+	private void GetMO()
+	{
+		try
+		{
+			String[] arr = Note.split("\\|");
+			if(arr.length >=2)
+			{
+				Keyword = arr[1];
+			}
+			
+			if(Keyword.equalsIgnoreCase(""))
+			{
+				Keyword = mServiceObj.RegKeyword +" API";
+			}
+		}
+		catch(Exception ex)
+		{
+			mLog.log.error(ex);
+		}
+	}
+	
 	private void Init() throws Exception
 	{
 		try
@@ -291,7 +316,7 @@ public class ProRegister
 			mRow_Log.SetValueCell("ChannelTypeName", Common.GetChannelType(Channel).toString());
 			mRow_Log.SetValueCell("MTTypeID", mMTType_Current.GetValue());
 			mRow_Log.SetValueCell("MTTypeName", mMTType_Current.toString());
-			mRow_Log.SetValueCell("MO", mServiceObj.RegKeyword);
+			mRow_Log.SetValueCell("MO", Keyword);
 			mRow_Log.SetValueCell("MT", MTContent_Current);
 			mRow_Log.SetValueCell("LogContent", "DKDV:" + mServiceObj.ServiceName);
 			mRow_Log.SetValueCell("PID", MyConvert.GetPIDByMSISDN(MSISDN, LocalConfig.MAX_PID));
@@ -498,7 +523,7 @@ public class ProRegister
 			MTContent = MTContent.replace("[DeregKeyword]", mServiceObj.DeregKeyword);
 			MTContent = MTContent.replace("[FreeTime]", FreeTime);
 
-			if (Common.SendMT(MSISDN, mServiceObj.RegKeyword, MTContent, RequestID))
+			if (Common.SendMT(MSISDN, Keyword, MTContent, RequestID))
 			{
 				AddToMOLog(mMTType, MTContent);
 			}
@@ -562,6 +587,8 @@ public class ProRegister
 			// Lấy service
 			mServiceObj = Common.GetServiceByCode(PacketName);
 
+			GetMO();
+			
 			if (mServiceObj.IsNull())
 			{
 				mLog.log.info("Dich vu khong ton tai.");

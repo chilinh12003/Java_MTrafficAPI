@@ -138,6 +138,7 @@ public class Deregister extends HttpServlet
 			String RequestID = "";
 			String MSISDN = "";
 			String PacketName = "";
+			String Note ="";
 			String Channel = "";
 			String application = "";
 			String username = "";
@@ -149,6 +150,7 @@ public class Deregister extends HttpServlet
 				MSISDN = Common.GetValueNode(XMLRequest, "msisdn").trim();
 				PacketName = Common.GetValueNode(XMLRequest, "packagename").trim();
 				Channel = Common.GetValueNode(XMLRequest, "channel").trim();
+				Note = Common.GetValueNode(XMLRequest, "note").trim();
 				application = Common.GetValueNode(XMLRequest, "application").trim();
 				username = Common.GetValueNode(XMLRequest, "username").trim();
 				userip = Common.GetValueNode(XMLRequest, "userip").trim();
@@ -166,7 +168,7 @@ public class Deregister extends HttpServlet
 				return GetResult(mMTType);
 			}
 			
-			ProDeregister mProcess = new ProDeregister(MSISDN, RequestID, PacketName, Channel, application, username, userip);
+			ProDeregister mProcess = new ProDeregister(MSISDN, RequestID, PacketName,Note, Channel, application, username, userip);
 
 			mMTType = mProcess.Process();
 
