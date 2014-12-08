@@ -89,7 +89,7 @@ public class ProRegister
 	MyTableModel mTable_WapRegLog = null;
 	
 	String Keyword = "DK API";
-	private int FreeCount = 7;
+	private int FreeCount = 1;
 	String MTContent = "";
 
 	String MSISDN = "";
@@ -107,7 +107,7 @@ public class ProRegister
 	String Bundle = "";
 
 	// Thời gian miễn phí để chèn vào MT trả về cho khách hàng
-	String FreeTime = "7 ngay";
+	String FreeTime = "1 ngay";
 
 	public ProRegister(String MSISDN, String RequestID, String PacketName, String Promotion, String Trial, String Bundle, String Note, String Channel,
 			String AppName, String UserName, String IP)
@@ -738,8 +738,8 @@ public class ProRegister
 			// Đăng ký mới (chưa từng đăng ký trước đây)
 			if (mSubObj.IsNull())
 			{
-				mCal_Expire.add(Calendar.DATE, 7);
-				FreeTime = "7 ngay";
+				mCal_Expire.add(Calendar.DATE, FreeCount -1);
+				FreeTime = Integer.toString(FreeCount)+ " ngay";
 
 				// Tạo dữ liệu cho đăng ký mới
 				CreateNewReg();
@@ -777,8 +777,8 @@ public class ProRegister
 			// Hủy thuê bao
 			if (mSubObj.IsDereg && mSubObj.StatusID == dat.sub.Subscriber.Status.UndoSub.GetValue())
 			{
-				mCal_Expire.add(Calendar.DATE, 7);
-				FreeTime = "7 ngay";
+				mCal_Expire.add(Calendar.DATE, FreeCount -1);
+				FreeTime = Integer.toString(FreeCount)+ " ngay";
 
 				CreateRegAgain();
 
